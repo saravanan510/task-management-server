@@ -2,6 +2,14 @@ const { validationResult } = require("express-validator");
 const Assignee = require("../model/assignee-model");
 const assigneeController = {};
 
+assigneeController.all = async (req, res) => {
+  try {
+    const assignees = await Assignee.find();
+    return res.json(assignees);
+  } catch (err) {
+    return res.status(500).json({ errors: "something went wrong" });
+  }
+};
 assigneeController.show = async (req, res) => {
   try {
     const assignee = await Assignee.findOne({ userId: req.user.id });

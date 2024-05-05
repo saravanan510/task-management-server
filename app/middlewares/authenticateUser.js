@@ -10,6 +10,7 @@ const authenticateUser = (req, res, next) => {
       id: tokendata.userId,
       role: tokendata.role,
     };
+
     next();
   } catch (err) {
     res.status(400).json({ error: err });
