@@ -18,7 +18,7 @@ taskController.create = async (req, res) => {
       const userIds = task.assignedTo.map((ele) => {
         return ele.value;
       });
-
+      console.log(userIds);
       sendEmail(userIds);
     }
     return res.status(201).json({ task });
@@ -30,8 +30,16 @@ taskController.create = async (req, res) => {
 
 taskController.show = async (req, res) => {
   try {
-    const tasklist = await Task.find();
-    return res.json(tasklist);
+    console.log(req.user.id);
+    if (req.user.role == "Assigner") {
+      const tasklist = await Task.find({ userId: req.user.id });
+      return res.json(tasklist);
+    } else if (req.user.role == "Assignee") {
+      const tasklist = await Task.find({
+        assignedTo: { $elemMatch: { value: req.user.id } },
+      }).populate("userId", ["username", "email"]);
+      return res.json(tasklist);
+    }
   } catch (err) {
     return res.status(500).json({ errors: "something went wrong" });
   }

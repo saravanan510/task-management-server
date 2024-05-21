@@ -1,17 +1,26 @@
 const express = require("express");
-const app = express();
 const cors = require("cors");
+
+const app = express();
+
 require("dotenv").config();
 const connectiondb = require("./config/database");
 const { checkSchema } = require("express-validator");
+const multer = require("multer");
+const path = require("path");
 
+const upload = require("./config/fileUpload");
 const userController = require("./app/controller/userController");
 const assigneeController = require("./app/controller/assigneeController");
 const assignerController = require("./app/controller/assignerController");
 const taskController = require("./app/controller/taskController");
+const commentController = require("./app/controller/commentController");
+const fileController = require("./app/controller/fileController");
+const logController = require("./app/controller/logController");
 
 const userRegisterValidationSchema = require("./app/validation/user-register-validation");
 const userLoginValidationSchema = require("./app/validation/user-login-validation");
+const commentValidationSchema = require("./app/validation/comment-validation");
 const {
   assigneeValidation,
   assigneeEditValidation,
@@ -29,6 +38,7 @@ const port = process.env.PORT;
 connectiondb();
 app.use(express.json());
 app.use(cors());
+app.use("/public", express.static("public"));
 
 app.post(
   "/user/register",
@@ -112,11 +122,58 @@ app.get(
   taskController.show
 );
 app.get(
+  "/assignee/task",
+  authenticateUser,
+  authorizeUser(["Assignee"]),
+  taskController.show
+);
+app.get(
   "/task-details/:id",
   authenticateUser,
   authorizeUser(["Assignee", "Assigner"]),
   taskController.taskDetails
 );
+
+// comments
+app.get(
+  "/comment/:id",
+  authenticateUser,
+  authorizeUser(["Assignee", "Assigner"]),
+  commentController.show
+);
+app.post(
+  "/comment",
+  authenticateUser,
+  authorizeUser(["Assignee", "Assigner"]),
+  checkSchema(commentValidationSchema),
+  commentController.create
+);
+
+// files
+
+app.get(
+  "/file/:id",
+  authenticateUser,
+  authorizeUser(["Assignee", "Assigner"]),
+  fileController.show
+);
+app.post("/file", upload.single("file"), fileController.create);
+
+// logs
+
+app.post(
+  "/log/:id",
+  authenticateUser,
+  authorizeUser(["Assignee"]),
+  logController.create
+);
+app.get(
+  "/log/:id",
+  authenticateUser,
+  authorizeUser(["Assignee"]),
+  logController.show
+);
+///
 
 app.listen(port, () => {
   console.log("server running on port", port);
